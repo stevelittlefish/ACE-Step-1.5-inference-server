@@ -61,7 +61,7 @@ def do_model_initialization(
     offload_dit_to_cpu = env_bool("ACESTEP_OFFLOAD_DIT_TO_CPU", False)
     compile_model = env_bool("ACESTEP_COMPILE_MODEL", False)
 
-    checkpoint_dir = os.path.join(project_root, "checkpoints")
+    checkpoint_dir = os.environ.get("ACESTEP_CHECKPOINTS_DIR") or os.path.join(project_root, "checkpoints")
     os.makedirs(checkpoint_dir, exist_ok=True)
 
     dit_model_name = get_model_name(config_path)

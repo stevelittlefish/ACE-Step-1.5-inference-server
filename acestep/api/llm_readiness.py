@@ -57,7 +57,7 @@ def ensure_llm_ready_for_request(
             return
 
         project_root = get_project_root()
-        checkpoint_dir = os.path.join(project_root, "checkpoints")
+        checkpoint_dir = os.environ.get("ACESTEP_CHECKPOINTS_DIR") or os.path.join(project_root, "checkpoints")
         lm_model_path = (
             req.lm_model_path or os.getenv("ACESTEP_LM_MODEL_PATH") or "acestep-5Hz-lm-0.6B"
         ).strip()

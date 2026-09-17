@@ -110,7 +110,7 @@ def temporary_llm_model(
             return
 
         project_root = get_project_root()
-        checkpoint_dir = os.path.join(project_root, "checkpoints")
+        checkpoint_dir = os.environ.get("ACESTEP_CHECKPOINTS_DIR") or os.path.join(project_root, "checkpoints")
         os.makedirs(checkpoint_dir, exist_ok=True)
 
         lm_model_name = get_model_name(desired)
