@@ -103,7 +103,12 @@ ENV ACESTEP_LLM_BACKEND=pt
 ENV ACESTEP_TMPDIR=/app/.cache/acestep/tmp
 ENV TRITON_CACHE_DIR=/app/.cache/acestep/triton
 ENV TORCHINDUCTOR_CACHE_DIR=/app/.cache/acestep/torchinductor
-ENV HF_HOME=/root/.cache/huggingface
+# ASS shared-cache convention: every backend image caches HF/torch weights under
+# /cache, and every service mounts the SAME host dir there (/srv/ass/cache:/cache).
+# One shared cache means the HF token is written once ($HF_HOME/token) and weights
+# that share a base model are deduplicated across backends. (Was /root/.cache/*.)
+ENV HF_HOME=/cache/huggingface
+ENV TORCH_HOME=/cache/torch
 
 # Disable tokenizers parallelism warnings
 ENV TOKENIZERS_PARALLELISM=false
