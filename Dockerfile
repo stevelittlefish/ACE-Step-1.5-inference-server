@@ -8,19 +8,19 @@
 # Build:
 #   docker build -t acestep .
 #
-# Run (REST API server — default):
+# Run (REST API server — default). ASS drives this in production and supplies the
+# real cache paths via env; a standalone smoke run just needs the one /cache mount
+# and the port (2766 = 0xACE):
 #   docker run --gpus all -it --rm \
 #     -p 2766:2766 \
-#     -v /srv/acestep/checkpoints:/app/checkpoints \
-#     -v /srv/acestep/cache:/app/.cache/acestep \
-#     -v /srv/acestep/huggingface:/root/.cache/huggingface \
+#     -v /srv/ass/cache:/cache \
+#     -e ACESTEP_CHECKPOINTS_DIR=/cache/acestep/checkpoints \
 #     acestep
 #
 # Run (Gradio UI instead):
 #   docker run --gpus all -it --rm \
 #     -p 7860:7860 \
-#     -v /srv/acestep/checkpoints:/app/checkpoints \
-#     -v /srv/acestep/gradio_outputs:/app/gradio_outputs \
+#     -v /srv/ass/cache:/cache \
 #     -e ACESTEP_MODE=gradio \
 #     acestep
 #
@@ -63,13 +63,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # ==================== uv ====================
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-# ==================== Project source ====================
-WORKDIR /app
-COPY . /app/
-
 # ==================== Install dependencies via uv ====================
-# Use uv sync with the lockfile for reproducible builds.
-# --no-dev skips dev dependencies, --frozen uses exact lockfile versions.
+# Deps BEFORE source, so a source edit doesn't invalidate the multi-GB torch/CUDA
+# layer and re-push it (that was the 30-min-per-commit tax). Copy only the manifests
+# — plus the one local path dependency (nano-vllm) uv.lock points at, which must be
+# present for the frozen sync. --no-install-project installs the deps but not the
+# ace-step package itself; that lands in the fast source layer below.
+WORKDIR /app
+COPY pyproject.toml uv.lock ./
+COPY acestep/third_parts/nano-vllm ./acestep/third_parts/nano-vllm
+RUN uv sync --frozen --no-dev --python python3.11 --no-install-project
+
+# ==================== Project source ====================
+# Just the source now — a tiny layer. Every future code change rebuilds/pushes
+# this in seconds instead of dragging the whole dependency set along.
+COPY . /app/
 RUN uv sync --frozen --no-dev --python python3.11
 
 # ==================== Runtime directories ====================
@@ -78,8 +86,7 @@ RUN mkdir -p \
         /app/.cache/acestep/tmp \
         /app/gradio_outputs \
         /app/output \
-        /app/lokr_output \
-        /root/.cache/huggingface
+        /app/lokr_output
 
 # ==================== Environment ====================
 # Bind to all interfaces for Docker port-mapping
@@ -107,12 +114,15 @@ ENV ACESTEP_LLM_BACKEND=pt
 ENV ACESTEP_TMPDIR=/app/.cache/acestep/tmp
 ENV TRITON_CACHE_DIR=/app/.cache/acestep/triton
 ENV TORCHINDUCTOR_CACHE_DIR=/app/.cache/acestep/torchinductor
-# ASS shared-cache convention: every backend image caches HF/torch weights under
-# /cache, and every service mounts the SAME host dir there (/srv/ass/cache:/cache).
-# One shared cache means the HF token is written once ($HF_HOME/token) and weights
-# that share a base model are deduplicated across backends. (Was /root/.cache/*.)
+# ASS cache convention: caches live under /cache (mounted from the host at
+# /srv/ass/cache). These are GENERIC defaults for a standalone run; under ASS each
+# service overrides them to its OWN per-service subdir (HF_HOME=/cache/acestep/
+# huggingface, TORCH_HOME=/cache/acestep/torch, ACESTEP_CHECKPOINTS_DIR=/cache/
+# acestep/checkpoints) so its weights are one deletable folder. The HF token is NOT
+# per-service: every service reads one shared file via HF_TOKEN_PATH=/cache/hf-token.
 ENV HF_HOME=/cache/huggingface
 ENV TORCH_HOME=/cache/torch
+ENV HF_TOKEN_PATH=/cache/hf-token
 
 # Disable tokenizers parallelism warnings
 ENV TOKENIZERS_PARALLELISM=false
