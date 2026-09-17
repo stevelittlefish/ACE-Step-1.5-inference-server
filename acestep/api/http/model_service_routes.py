@@ -154,6 +154,9 @@ def register_model_service_routes(
                 "service": "ACE-Step API",
                 "version": "1.0",
                 "models_initialized": bool(getattr(app.state, "_initialized", False)),
+                # ASS reads this to know the weights are off the GPU (parked) vs
+                # resident — part of the backend contract's state machine.
+                "parked": bool(getattr(app.state, "parked", False)),
                 "llm_initialized": inventory["llm_initialized"],
                 "loaded_model": inventory["default_model"],
                 "loaded_lm_model": inventory["loaded_lm_model"],

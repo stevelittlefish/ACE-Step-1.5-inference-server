@@ -9,12 +9,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.datastructures import UploadFile as StarletteUploadFile
 
-from acestep.api.http.audio_route import register_audio_route
+from acestep.api.http.ass_contract_routes import register_ass_contract_routes
 from acestep.api.http.lora_routes import register_lora_routes
-from acestep.api.http.model_service_routes import register_model_service_routes
-from acestep.api.http.query_result_route import register_query_result_route
+from acestep.api.http.model_service_routes import (
+    _collect_model_inventory,
+    register_model_service_routes,
+)
 from acestep.api.http.reinitialize_route import register_reinitialize_route
-from acestep.api.http.release_task_route import register_release_task_route
 from acestep.api.http.sample_format_routes import register_sample_format_routes
 from acestep.api.train_api_service import register_training_api_routes
 from acestep.openrouter_adapter import create_openrouter_router
@@ -129,13 +130,15 @@ def configure_api_routes(
         append_jsonl=runtime_append_jsonl,
     )
 
-    register_audio_route(app=app, verify_api_key=verify_api_key)
-
-    register_release_task_route(
+    # ASS backend contract — replaces the legacy /release_task + /query_result +
+    # /v1/audio surface. ACE-Step now speaks the same job envelope as every other
+    # backend ASS multiplexes onto the GPU (submit -> poll -> download by name),
+    # plus /park + /unpark for the CPU<->GPU swap. No back-compat aliases: the
+    # only client (SlopBC) is moving to front ACE-Step through ASS.
+    register_ass_contract_routes(
         app=app,
-        verify_token_from_request=verify_token_from_request,
-        wrap_response=wrap_response,
         store=store,
+        verify_token_from_request=verify_token_from_request,
         request_parser_cls=request_parser_cls,
         request_model_cls=request_model_cls,
         validate_audio_path=validate_audio_path,
@@ -145,15 +148,7 @@ def configure_api_routes(
         lm_default_temperature=lm_default_temperature,
         lm_default_cfg_scale=lm_default_cfg_scale,
         lm_default_top_p=lm_default_top_p,
-    )
-
-    register_query_result_route(
-        app=app,
-        verify_token_from_request=verify_token_from_request,
-        wrap_response=wrap_response,
-        store=store,
-        map_status=map_status,
-        result_key_prefix=result_key_prefix,
-        task_timeout_seconds=task_timeout_seconds,
-        log_buffer=log_buffer,
+        get_project_root=get_project_root,
+        get_model_name=get_model_name,
+        collect_model_inventory=_collect_model_inventory,
     )

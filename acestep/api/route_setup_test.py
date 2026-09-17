@@ -14,9 +14,7 @@ from acestep.api.route_setup import configure_api_routes
 class RouteSetupTests(unittest.TestCase):
     """Behavior tests for middleware and route registration orchestration."""
 
-    @patch("acestep.api.route_setup.register_query_result_route")
-    @patch("acestep.api.route_setup.register_release_task_route")
-    @patch("acestep.api.route_setup.register_audio_route")
+    @patch("acestep.api.route_setup.register_ass_contract_routes")
     @patch("acestep.api.route_setup.register_training_api_routes")
     @patch("acestep.api.route_setup.register_reinitialize_route")
     @patch("acestep.api.route_setup.register_lora_routes")
@@ -31,9 +29,7 @@ class RouteSetupTests(unittest.TestCase):
         mock_register_lora_routes,
         mock_register_reinitialize_route,
         mock_register_training_api_routes,
-        mock_register_audio_route,
-        mock_register_release_task_route,
-        mock_register_query_result_route,
+        mock_register_ass_contract_routes,
     ) -> None:
         """Setup should add CORS, include router, and invoke all route registrars once."""
 
@@ -84,9 +80,8 @@ class RouteSetupTests(unittest.TestCase):
         mock_register_lora_routes.assert_called_once()
         mock_register_reinitialize_route.assert_called_once()
         mock_register_training_api_routes.assert_called_once()
-        mock_register_audio_route.assert_called_once()
-        mock_register_release_task_route.assert_called_once()
-        mock_register_query_result_route.assert_called_once()
+        # ASS contract replaces the legacy audio/release_task/query_result trio.
+        mock_register_ass_contract_routes.assert_called_once()
 
 
 if __name__ == "__main__":
