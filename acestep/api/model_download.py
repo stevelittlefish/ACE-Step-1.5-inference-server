@@ -15,6 +15,14 @@ MODEL_REPO_MAPPING = {
     "acestep-v15-base": "ACE-Step/acestep-v15-base",
     "acestep-v15-sft": "ACE-Step/acestep-v15-sft",
     "acestep-v15-turbo-shift3": "ACE-Step/acestep-v15-turbo-shift3",
+    # XL (4B) DiTs. These live in SUBMODEL_REGISTRY (model_downloader.py) but
+    # were missing here, so ensure_model_downloaded() couldn't resolve them and
+    # fell back to the unified repo — fine while the old box had them
+    # pre-seeded in /app/checkpoints, broken the moment you download fresh. Since
+    # xl-turbo is now the default (see Dockerfile), it MUST resolve to its repo.
+    "acestep-v15-xl-base": "ACE-Step/acestep-v15-xl-base",
+    "acestep-v15-xl-sft": "ACE-Step/acestep-v15-xl-sft",
+    "acestep-v15-xl-turbo": "ACE-Step/acestep-v15-xl-turbo",
 }
 
 DEFAULT_REPO_ID = "ACE-Step/Ace-Step1.5"

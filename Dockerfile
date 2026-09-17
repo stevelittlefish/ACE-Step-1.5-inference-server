@@ -94,8 +94,12 @@ ENV ACESTEP_MODE=api
 ENV ACESTEP_NO_INIT=false
 ENV ACESTEP_INIT_LLM=auto
 
-# Default models
-ENV ACESTEP_CONFIG_PATH=acestep-v15-turbo
+# Default models. XL (4B) turbo is the DiT everyone actually runs now — the old
+# 2B acestep-v15-turbo is retired. Paired with the 1.7B planner (the 4B LM was
+# only ever the xl-sft experiment). pt LM backend, not vllm: pt offloads the
+# planner to CPU between steps (vllm greedily pins VRAM), which is what lets the
+# card be shared / parked.
+ENV ACESTEP_CONFIG_PATH=acestep-v15-xl-turbo
 ENV ACESTEP_LM_MODEL_PATH=acestep-5Hz-lm-1.7B
 ENV ACESTEP_LLM_BACKEND=pt
 
