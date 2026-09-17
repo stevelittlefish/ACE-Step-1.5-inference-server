@@ -118,7 +118,7 @@ uv run acestep
 uv run acestep-api
 ```
 
-Open http://localhost:7860 (Gradio) or http://localhost:8001 (API).
+Open http://localhost:7860 (Gradio) or http://localhost:2766 (API).
 
 > 📦 **Windows users:** A [portable package](https://files.acemusic.ai/acemusic/win/ACE-Step-1.5.7z) with pre-installed dependencies is available. See [Installation Guide](./docs/en/INSTALL.md#-windows-portable-package).
 

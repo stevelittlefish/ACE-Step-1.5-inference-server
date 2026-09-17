@@ -31,12 +31,12 @@ if [ "${ACESTEP_INIT_SERVICE:-true}" = "true" ]; then
 fi
 
 if [ "${ACESTEP_MODE}" = "api" ]; then
-    echo "Starting REST API server on 0.0.0.0:${ACESTEP_API_PORT:-8001} ..."
+    echo "Starting REST API server on 0.0.0.0:${ACESTEP_API_PORT:-2766} ..."
     # ACESTEP_EXTRA_ARGS is intentionally word-split to support optional CLI flags.
     # shellcheck disable=SC2086
     exec uv run python -m acestep.api_server \
         --host "${ACESTEP_API_HOST:-0.0.0.0}" \
-        --port "${ACESTEP_API_PORT:-8001}" \
+        --port "${ACESTEP_API_PORT:-2766}" \
         ${ACESTEP_EXTRA_ARGS:-}
 else
     echo "Starting Gradio UI on 0.0.0.0:${GRADIO_PORT:-7860} ..."

@@ -7,7 +7,7 @@ Usage:
 	./close_api_server.sh [--port PORT] [--pid PID] [--force]
 
 Defaults:
-	PORT: 8001
+	PORT: 2766
 
 Behavior:
 	- If --pid is provided, stops that PID.
@@ -71,7 +71,7 @@ _find_pids_by_port() {
 	if command -v lsof >/dev/null 2>&1; then
 		pids="$(lsof -nP -t -iTCP:"$port" -sTCP:LISTEN 2>/dev/null | tr '\n' ' ' || true)"
 	elif command -v ss >/dev/null 2>&1; then
-		# 输出示例：LISTEN 0 4096 127.0.0.1:8001 ... users:("python",pid=12345,fd=3)
+		# 输出示例：LISTEN 0 4096 127.0.0.1:2766 ... users:("python",pid=12345,fd=3)
 		pids="$(ss -lptn "sport = :$port" 2>/dev/null | sed -n 's/.*pid=\([0-9]\+\).*/\1/p' | sort -u | tr '\n' ' ' || true)"
 	elif command -v netstat >/dev/null 2>&1; then
 		# 输出示例：tcp ... LISTEN 12345/python

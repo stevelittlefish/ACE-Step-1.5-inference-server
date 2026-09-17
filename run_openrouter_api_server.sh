@@ -7,7 +7,7 @@ CONDA_ACTIVATE="${CONDA_ACTIVATE:-/root/data/repo/gongjunmin/miniconda3/bin/acti
 CONDA_ENV_NAME="${ACESTEP_CONDA_ENV:-acestep_v15_train}"
 
 HOST="${ACESTEP_API_HOST:-0.0.0.0}"
-PORT="${ACESTEP_API_PORT:-8001}"
+PORT="${ACESTEP_API_PORT:-2766}"
 LOG_LEVEL="${ACESTEP_API_LOG_LEVEL:-debug}"
 
 cd "$ROOT_DIR"

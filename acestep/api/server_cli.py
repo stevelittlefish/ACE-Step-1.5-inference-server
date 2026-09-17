@@ -29,8 +29,8 @@ def run_api_server_main(
     parser.add_argument(
         "--port",
         type=int,
-        default=int(os.getenv("ACESTEP_API_PORT", "8001")),
-        help="Bind port (default from ACESTEP_API_PORT or 8001)",
+        default=int(os.getenv("ACESTEP_API_PORT", "2766")),
+        help="Bind port (default from ACESTEP_API_PORT or 2766, 0xACE)",
     )
     parser.add_argument(
         "--api-key",

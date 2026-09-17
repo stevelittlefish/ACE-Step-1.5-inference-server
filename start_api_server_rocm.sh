@@ -35,7 +35,7 @@ export TOKENIZERS_PARALLELISM="false"
 # ==================== Server Configuration ====================
 HOST="127.0.0.1"
 # HOST="0.0.0.0"
-PORT=8001
+PORT=2766
 
 # ==================== Model Configuration ====================
 # API key for authentication (optional)

@@ -10,7 +10,7 @@
 #
 # Run (REST API server — default):
 #   docker run --gpus all -it --rm \
-#     -p 8001:8001 \
+#     -p 2766:2766 \
 #     -v /srv/acestep/checkpoints:/app/checkpoints \
 #     -v /srv/acestep/cache:/app/.cache/acestep \
 #     -v /srv/acestep/huggingface:/root/.cache/huggingface \
@@ -114,13 +114,13 @@ ENV TORCH_HOME=/cache/torch
 ENV TOKENIZERS_PARALLELISM=false
 
 # ==================== Ports ====================
-# 7860 = Gradio web UI | 8001 = REST API server
-EXPOSE 7860 8001
+# 7860 = Gradio web UI | 2766 = REST API server (0xACE)
+EXPOSE 7860 2766
 
 # ==================== Health check ====================
 HEALTHCHECK --interval=60s --timeout=10s --start-period=120s --retries=3 \
     CMD curl -sf http://localhost:${GRADIO_PORT:-7860}/ > /dev/null 2>&1 \
-     || curl -sf http://localhost:${ACESTEP_API_PORT:-8001}/health > /dev/null 2>&1 \
+     || curl -sf http://localhost:${ACESTEP_API_PORT:-2766}/health > /dev/null 2>&1 \
      || exit 1
 
 # ==================== Entrypoint ====================

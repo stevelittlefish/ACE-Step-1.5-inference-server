@@ -11,7 +11,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Server settings
 HOST="127.0.0.1"
 # HOST="0.0.0.0"
-PORT=8001
+PORT=2766
 
 # API key for authentication (optional)
 API_KEY=""
