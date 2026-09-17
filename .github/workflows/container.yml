@@ -44,7 +44,11 @@ jobs:
             # For tagged releases: v0.1.8 -> 0.1.8, latest
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest,enable={{is_default_branch}}
+            # Stamp latest on every v* tag too (ass.toml pulls :latest for all
+            # backends) — a tag push isn't the default branch, so the old
+            # is_default_branch guard meant tags never got :latest. Match the
+            # sibling repos (stable-audio-3-docker, stem-separator).
+            type=raw,value=latest
             # For workflow_dispatch with custom tag
             type=raw,value=${{ github.event.inputs.tag }},enable=${{ github.event.inputs.tag != '' }}
             # Fallback: short SHA
