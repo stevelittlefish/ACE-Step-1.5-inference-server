@@ -25,6 +25,7 @@ instead of the caller having to scrape it out of a stringly-typed ``result``.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import os
 from typing import Any, Callable, Dict, List, Optional
 
@@ -234,10 +235,14 @@ async def _do_park(app: FastAPI, store: Any, *, want_parked: bool) -> JSONRespon
         app.state.parked = want_parked
         return JSONResponse(content={"parked": want_parked, "changed": True, "note": "no model loaded"})
 
+    # Serialize against model init/reinit via the shared init lock. It's an
+    # asyncio.Lock, so it MUST be awaited — the old hand-rolled `lock.acquire()`
+    # (no await) returned a coroutine, never actually held the lock, and then blew
+    # up with "Lock is not acquired" in release(). `async with` matches how every
+    # other route in the API uses this exact lock.
     lock = getattr(app.state, "_init_lock", None)
-    if lock is not None:
-        lock.acquire()
-    try:
+    guard = lock if lock is not None else contextlib.nullcontext()
+    async with guard:
         for handler in handlers:
             target = "cpu" if want_parked else getattr(handler, "device", "cpu")
             for component_name in ("model", "vae", "text_encoder"):
@@ -252,9 +257,6 @@ async def _do_park(app: FastAPI, store: Any, *, want_parked: bool) -> JSONRespon
                 handler._empty_cache()
         if not want_parked and torch.cuda.is_available():
             torch.cuda.synchronize()
-    finally:
-        if lock is not None:
-            lock.release()
 
     app.state.parked = want_parked
     return JSONResponse(content={"parked": want_parked, "changed": True})
