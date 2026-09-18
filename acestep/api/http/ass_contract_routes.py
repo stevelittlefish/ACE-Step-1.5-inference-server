@@ -33,6 +33,7 @@ from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse, Response
 
 from acestep.api.http.ass_artifacts import artifacts_for, public
+from acestep.api.http.vram import vram_stats
 from acestep.api.http.release_task_request_parser import parse_release_task_request
 
 
@@ -182,6 +183,7 @@ def register_ass_contract_routes(
                 "tasks": ["text2music", "cover", "repaint", "extract"],
                 "audio_formats": ["mp3", "flac", "opus", "aac", "wav", "wav32"],
             },
+            "vram": vram_stats(),
         }
 
     # ---- park / unpark ----------------------------------------------------
