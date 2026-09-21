@@ -142,9 +142,13 @@ class GenerationParams:
     latent_rescale: float = 1.0     # Multiplicative rescale on DiT latents. Default 1.0 = no rescale.
 
     # Advanced Settings
-    inference_steps: int = 8
+    # None = resolved after the loaded model configuration is available (see
+    # GenerateMusicMixin._resolve_inference_steps / _resolve_guidance_scale):
+    # turbo 8 steps / CFG 1.0, sft 50 / 7.0, base 32 / 7.0. Same late-binding
+    # pattern as dcw_enabled below. An explicit caller value is respected.
+    inference_steps: Optional[int] = None
     seed: int = -1
-    guidance_scale: float = 7.0
+    guidance_scale: Optional[float] = None
     use_adg: bool = False
     cfg_interval_start: float = 0.0
     cfg_interval_end: float = 1.0

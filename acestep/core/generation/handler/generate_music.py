@@ -19,6 +19,8 @@ from acestep.core.generation.handler.repaint_waveform_splice import (
 from acestep.gpu_config import (
     DIT_INFERENCE_VRAM_PER_BATCH,
     VRAM_SAFETY_MARGIN_GB,
+    default_guidance_scale_for_path,
+    default_inference_steps_for_path,
     get_dit_type_from_path,
     get_effective_free_vram_gb,
 )
@@ -192,6 +194,36 @@ class GenerateMusicMixin:
             return bool(dcw_enabled)
         return bool(self.is_turbo_model())
 
+    def _loaded_config_path(self) -> str:
+        """Checkpoint path of the currently loaded DiT (``""`` if unknown)."""
+        if getattr(self, "last_init_params", None):
+            return self.last_init_params.get("config_path", "") or ""
+        return ""
+
+    def _resolve_inference_steps(self, inference_steps: Optional[int]) -> int:
+        """Resolve an explicit or model-aware diffusion step count.
+
+        ``None`` means "use whatever this model family wants" — 8 for turbo, 50
+        for sft, 32 for base — so swapping the checkpoint swaps the step count
+        without the caller having to know. An explicit value is respected (the
+        turbo path still clamps >8 downstream in ``service_generate``).
+        """
+        if inference_steps is not None:
+            return int(inference_steps)
+        return default_inference_steps_for_path(self._loaded_config_path())
+
+    def _resolve_guidance_scale(self, guidance_scale: Optional[float]) -> float:
+        """Resolve an explicit or model-aware CFG guidance scale.
+
+        ``None`` selects the family default: 1.0 for turbo (which bakes guidance
+        into distillation and does not use CFG) and 7.0 for base/sft. An explicit
+        value is respected; the turbo override below still forces it to 1.0 to
+        avoid double-applying guidance.
+        """
+        if guidance_scale is not None:
+            return float(guidance_scale)
+        return default_guidance_scale_for_path(self._loaded_config_path())
+
     def generate_music(
         self,
         captions: str,
@@ -201,8 +233,8 @@ class GenerateMusicMixin:
         key_scale: str = "",
         time_signature: str = "",
         vocal_language: str = "en",
-        inference_steps: int = 8,
-        guidance_scale: float = 7.0,
+        inference_steps: Optional[int] = None,
+        guidance_scale: Optional[float] = None,
         use_random_seed: bool = True,
         seed: Optional[Union[str, float, int]] = -1,
         reference_audio=None,
@@ -256,8 +288,10 @@ class GenerateMusicMixin:
             lyrics: Lyric text used for conditioning.
             reference_audio: Optional reference-audio payload.
             src_audio: Optional source audio for repaint/cover.
-            inference_steps: Diffusion step count.
-            guidance_scale: CFG guidance value.
+            inference_steps: Diffusion step count. ``None`` selects the default
+                for the loaded model family (turbo 8, sft 50, base 32).
+            guidance_scale: CFG guidance value. ``None`` selects the default for
+                the loaded model family (turbo 1.0 — CFG off — else 7.0).
             seed: Optional explicit seed from caller/UI.
             infer_method: Diffusion method name.
             dcw_enabled: Enable Differential Correction in Wavelet domain.
@@ -305,6 +339,13 @@ class GenerateMusicMixin:
             audio_cover_strength=audio_cover_strength,
             cover_noise_strength=cover_noise_strength,
         )
+
+        # Fill unset step count / guidance from the loaded model family so a
+        # bare request "just works" on whatever checkpoint is loaded: sft wants
+        # 50 steps + CFG 7.0, turbo wants 8 steps + no CFG. Explicit caller
+        # values pass through untouched. Same pattern as _resolve_dcw_enabled.
+        inference_steps = self._resolve_inference_steps(inference_steps)
+        guidance_scale = self._resolve_guidance_scale(guidance_scale)
 
         # Turbo models bake guidance into the distillation process and do not
         # use CFG.  Forcing guidance_scale to 1.0 avoids double-application of

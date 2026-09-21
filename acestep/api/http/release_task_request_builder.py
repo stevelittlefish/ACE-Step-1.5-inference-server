@@ -53,8 +53,11 @@ def build_generate_music_request(
         time_signature=parser.str("time_signature"),
         audio_duration=parser.float("audio_duration"),
         vocal_language=parser.str("vocal_language", "en"),
-        inference_steps=parser.int("inference_steps", 8),
-        guidance_scale=parser.float("guidance_scale", 7.0),
+        # No default: absent => None => handler derives it from the loaded model
+        # family (turbo 8/1.0, sft 50/7.0, base 32/7.0). Hardcoding 8/7.0 here is
+        # exactly what would pin a multipart caller to turbo settings on sft.
+        inference_steps=parser.int("inference_steps"),
+        guidance_scale=parser.float("guidance_scale"),
         use_random_seed=parser.bool("use_random_seed", True),
         seed=parser.get("seed", -1),
         batch_size=parser.int("batch_size"),

@@ -217,6 +217,46 @@ def get_dit_type_from_path(config_path: str) -> str:
     return f"xl_{variant}" if is_xl else variant
 
 
+# Canonical per-family inference defaults. The numbers mirror
+# ``training_v2.model_discovery._BASE_DEFAULTS`` and the Gradio UI control
+# config (``ui/gradio/events/generation/model_config.py``) so every entry point
+# agrees on what "just run it" means for a given checkpoint. Turbo bakes guidance
+# into the distillation (no CFG => 1.0) and needs only a handful of steps; base
+# and sft do real CFG over many steps — running sft at turbo's 8-step/CFG-off
+# settings is exactly how you get a big model that sounds worse than the small one.
+_FAMILY_INFER_DEFAULTS = {
+    #          steps  guidance (CFG)
+    "turbo": {"inference_steps": 8, "guidance_scale": 1.0},
+    "sft": {"inference_steps": 50, "guidance_scale": 7.0},
+    "base": {"inference_steps": 32, "guidance_scale": 7.0},
+}
+
+
+def get_model_family_from_path(config_path: str) -> str:
+    """Return the inference-default family — ``turbo`` | ``sft`` | ``base``.
+
+    Unlike :func:`get_dit_type_from_path` (which folds sft into base because they
+    share a VRAM profile), this keeps sft distinct: sft and base want *different*
+    step counts (50 vs 32), so we cannot collapse them here.
+    """
+    path = (config_path or "").lower()
+    if _has_path_token("turbo", path):
+        return "turbo"
+    if _has_path_token("sft", path):
+        return "sft"
+    return "base"
+
+
+def default_inference_steps_for_path(config_path: str) -> int:
+    """Model-family default diffusion step count for a checkpoint path."""
+    return _FAMILY_INFER_DEFAULTS[get_model_family_from_path(config_path)]["inference_steps"]
+
+
+def default_guidance_scale_for_path(config_path: str) -> float:
+    """Model-family default CFG guidance scale for a checkpoint path."""
+    return _FAMILY_INFER_DEFAULTS[get_model_family_from_path(config_path)]["guidance_scale"]
+
+
 @dataclass
 class GPUConfig:
     """GPU configuration based on available memory"""

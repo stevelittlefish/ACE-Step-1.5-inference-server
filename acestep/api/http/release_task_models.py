@@ -38,8 +38,13 @@ class GenerateMusicRequest(BaseModel):
     key_scale: str = ""
     time_signature: str = ""
     vocal_language: str = "en"
-    inference_steps: int = 8
-    guidance_scale: float = 7.0
+    # None = derive from the loaded model family (turbo 8 steps / CFG 1.0,
+    # sft 50 / 7.0, base 32 / 7.0). Resolved in the handler once the checkpoint
+    # is known, so a bare request "just works" on whichever DiT is loaded — a
+    # caller who omits these no longer gets turbo's 8-step/CFG-off settings
+    # applied to a 50-step CFG model. An explicit value still wins.
+    inference_steps: Optional[int] = None
+    guidance_scale: Optional[float] = None
     use_random_seed: bool = True
     seed: Union[int, str] = -1
 
